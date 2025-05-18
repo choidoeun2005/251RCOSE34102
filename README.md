@@ -2,7 +2,7 @@
 
 
 ## Mandatory
-- FCFS (완료)
+- <b> FCFS (완료) </b>
 
 - SJF (TODO)
 - Priority (TODO)
