@@ -1,16 +1,26 @@
-//
-// Created by naruseon on 25. 4. 28.
-//
-
 #ifndef PROCESS_H
 #define PROCESS_H
-#define SIZE 100
 
-enum ON {
+#define SIZE 100
+#define MAX_LINE_WIDTH 16
+
+extern struct Process *processes[SIZE];
+extern struct Process *readyQueue[SIZE];
+extern struct Process *waitingQueue[SIZE];
+
+extern int PIDOccupation[SIZE];
+// Each element is 0 or 1, indicating whether the PID of the index is taken
+extern int availablePIDs[SIZE]; // Available list of PIDs
+extern int arrivalTimes[SIZE]; // Arrival Times of all processes
+
+extern int processInMemory; // Number of all processes in ready/waiting/running queue
+extern int processWaiting;
+
+enum MODE {
     ARRIVAL_TIME,
-    CPU_BURST_TIME,
+    SORT_SJF,
     PRIORITY,
-    REMAINING_IO_BURST_TIME
+    REARRIVAL_TIME
 };
 
 struct Process {
@@ -21,40 +31,42 @@ struct Process {
     int IOburstTime[SIZE][2];
     int IOburstTimeNumber;
     int currentIOburstNumber;
-    int remainingIOburstTime;
+    int rearrivalTime;
     int priority;
-} Process;
+};
 
 struct Evaluation {
     int turnaroundTime[SIZE];
     int waitingTime[SIZE];
     double averageTurnaroundTime;
     double averageWaitingTime;
-} Evaluation;
+};
 
 void config();
-void createProcess(int, int);
 
-void schedule();
+void reset();
 
-void scheduleFCFS();
-void scheduleSJF();
-void schedulePriority();
-void scheduleRoundRobin();
-void schedulePreemtiveFCFS();
-void schedulePreemtiveSJF();
+void createProcess();
 
-struct Evaluation *evaluateAlgorithm(int[][3], int, int);
-void printEvaluation(struct Evaluation *, char *);
+int removeProcess(int PID);
 
-void insertMinHeap(struct Process **, struct Process*, int, int);
-struct Process *popMinHeap(struct Process **, int, int);
+void freePID(int PID);
+
+struct Evaluation *evaluateAlgorithm(int info[][3], int len, int taskNumbers);
+
+void sortProcesses(int mode);
 
 void printQueue();
-void drawChart(int[][3], int);
 
-int *getNRandomNumbers(int, int, int, int, int);
-int getTimeScaleGCD(int[][3], int);
-int GCD(int, int);
+void drawChart(int info[][3], int taskNumber);
+
+int nextCPUburstTime(struct Process *p);
+
+void insertMinHeap(struct Process **heapQueue, struct Process *process, int heapLen, int mode);
+
+struct Process *popMinHeap(struct Process **heapQueue, int heapLen, int mode);
+
+int *getNRandomNumbers(int N, int start, int end, int sorted, int scale);
+
 
 #endif //PROCESS_H
