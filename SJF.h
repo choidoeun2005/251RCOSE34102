@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <string.h>
+
 #include "process.h"
 
 void scheduleSJF(int queue[][3]);

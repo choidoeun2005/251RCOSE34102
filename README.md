@@ -85,4 +85,4 @@
 ## Optional
 
 - Multilevel Queue Scheduling (TODO)
-- Decaying.. (TODO)
+- Decaying (TODO)

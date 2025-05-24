@@ -70,3 +70,4 @@ int *getNRandomNumbers(int N, int start, int end, int sorted, int scale);
 
 
 #endif //PROCESS_H
+

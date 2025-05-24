@@ -1,6 +1,9 @@
+#pragma once
+
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "process.h"
 #include "FCFS.h"
@@ -8,7 +11,6 @@
 #include "SJF.h"
 #include "util.h"
 
-#include <string.h>
 
 #define HELP_COMMAND_PRINT_SPACE 35
 

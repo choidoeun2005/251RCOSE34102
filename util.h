@@ -98,3 +98,4 @@ char *toLowerCase(char *str) {
     return str;
 }
 #endif //UTIL_H
+
