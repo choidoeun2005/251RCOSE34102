@@ -5,6 +5,7 @@
 #include <string.h>
 
 #include "process.h"
+#include "util.h"
 
 void scheduleSJF(int queue[][3]);
 
@@ -23,11 +24,11 @@ void printSJF() {
     drawChart(queue, i);
     printf("\n");
 
-    struct Evaluation *SJFevaluation = evaluateAlgorithm(queue, i, processInMemory);
-    printf("Average Turnaround : %.2lf\n", SJFevaluation->averageTurnaroundTime);
-    printf("Average Waiting : %.2lf\n", SJFevaluation->averageWaitingTime);
+    struct Evaluation *eval = evaluateAlgorithm(queue, i, processInMemory);
+    printf("Average Turnaround : %.2lf\n", eval->averageTurnaroundTime);
+    printf("Average Waiting : %.2lf\n", eval->averageWaitingTime);
 
-    free(SJFevaluation);
+    free(eval);
 
     printf("\n");
 }
@@ -45,7 +46,7 @@ void scheduleSJF(int queue[][3]) {
     while (runningProcesses) {
         while (cursor < processInMemory) {
             if (processes[cursor]->arrivalTime <= end) {
-                insertMinHeap(readyQueue, processes[cursor++], readyQueuelen++, SORT_SJF);
+                insertMinHeap(readyQueue, processes[cursor++], readyQueuelen++, NEXT_CPU_BURST_TIME);
             } else break;
         }
 
@@ -53,7 +54,7 @@ void scheduleSJF(int queue[][3]) {
             while (waitingProcesses && waitingQueue[0]->arrivalTime <= end) {
                 insertMinHeap(readyQueue,
                               popMinHeap(waitingQueue, waitingProcesses--, ARRIVAL_TIME),
-                              readyQueuelen++, SORT_SJF);
+                              readyQueuelen++, NEXT_CPU_BURST_TIME);
             }
         }
 
@@ -68,7 +69,7 @@ void scheduleSJF(int queue[][3]) {
         } else {
             struct Process *top = malloc(sizeof(struct Process));
             memcpy(top, readyQueue[0], sizeof(struct Process));
-            popMinHeap(readyQueue, readyQueuelen--, SORT_SJF);
+            popMinHeap(readyQueue, readyQueuelen--, NEXT_CPU_BURST_TIME);
             PID = top->PID;
             queue[i][2] = top->arrivalTime;
 

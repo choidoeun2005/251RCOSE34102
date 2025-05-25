@@ -131,7 +131,7 @@ void createProcess() {
         } else
             scanf("%d", &IOburstTimeNumber);
 
-        if (IOburstTimeNumber == -1)  goto suspend;
+        if (IOburstTimeNumber == -1) goto suspend;
 
         int IOburstTime[SIZE][2];
         IOburstTime[IOburstTimeNumber][0] = -1; // -1 Indicates the end of the list
@@ -194,9 +194,9 @@ void createProcess() {
     }
     return;
 
-    suspend:
-        if (PID >= 0) freePID(PID);
-        printf("suspending...\n");
+suspend:
+    if (PID >= 0) freePID(PID);
+    printf("suspending...\n");
 }
 
 int removeProcess(int PID) {
@@ -316,8 +316,7 @@ void drawChart(int info[][3], int taskNumber) {
             if (PID == -1) {
                 for (int j = 0; j < 6; j++)
                     printf(" ");
-            }
-            else {
+            } else {
                 int digit = 1;
                 if (PID >= 10) digit = 2;
                 if (PID >= 100) digit = 3;
@@ -363,15 +362,13 @@ void insertMinHeap(struct Process **heapQueue, struct Process *process, int heap
             case ARRIVAL_TIME:
                 swap = childProcess->arrivalTime < parentProcess->arrivalTime;
                 break;
-            case SORT_SJF:
+            case NEXT_CPU_BURST_TIME:
                 swap = nextCPUburstTime(childProcess) < nextCPUburstTime(parentProcess);
                 break;
             case PRIORITY:
                 swap = heapQueue[heapLen]->priority < heapQueue[parent]->priority;
                 break;
-            case REARRIVAL_TIME:
-                swap = heapQueue[heapLen]->rearrivalTime < heapQueue[parent]->rearrivalTime;
-            break;
+                break;
             default:
                 break;
         }
@@ -404,20 +401,29 @@ struct Process *popMinHeap(struct Process **heapQueue, int heapLen, int mode) {
         switch (mode) {
             case ARRIVAL_TIME:
                 if (r < heapLen && heapQueue[r] == NULL) minChild = l;
-                else minChild = ((r < heapLen) &&
-                    heapQueue[l]->arrivalTime > heapQueue[r]->arrivalTime) ? r : l;
+                else
+                    minChild = ((r < heapLen) &&
+                                heapQueue[l]->arrivalTime > heapQueue[r]->arrivalTime)
+                                   ? r
+                                   : l;
                 swap = heapQueue[parent]->arrivalTime > heapQueue[minChild]->arrivalTime;
                 break;
-            case SORT_SJF:
+            case NEXT_CPU_BURST_TIME:
                 if (r < heapLen && heapQueue[r] == NULL) minChild = l;
-                else minChild = ((r < heapLen) &&
-                    nextCPUburstTime(heapQueue[l]) > nextCPUburstTime(heapQueue[r])) ? r : l;
+                else
+                    minChild = ((r < heapLen) &&
+                                nextCPUburstTime(heapQueue[l]) > nextCPUburstTime(heapQueue[r]))
+                                   ? r
+                                   : l;
                 swap = nextCPUburstTime(heapQueue[parent]) > nextCPUburstTime(heapQueue[minChild]);
                 break;
             case PRIORITY:
                 if (r < heapLen && heapQueue[r] == NULL) minChild = l;
-                else minChild = ((r < heapLen) &&
-                heapQueue[l]->priority > heapQueue[r]->priority) ? r : l;
+                else
+                    minChild = ((r < heapLen) &&
+                                heapQueue[l]->priority > heapQueue[r]->priority)
+                                   ? r
+                                   : l;
                 swap = heapQueue[parent]->priority > heapQueue[minChild]->priority;
             default:
                 break;
@@ -434,6 +440,58 @@ struct Process *popMinHeap(struct Process **heapQueue, int heapLen, int mode) {
     return root;
 }
 
+void insertSortedArray(struct Process **processArr, struct Process *process, int arrLen, int mode) {
+    switch (mode) {
+        case ARRIVAL_TIME:
+            int currentArrival = process->arrivalTime;
+            int l = 0;
+            int r = arrLen;
+            int mid = l + r >> 1;
+
+            while (l < r) {
+                int midArrival = processArr[mid]->arrivalTime;
+                if (midArrival < currentArrival) l = mid + 1;
+                else if (midArrival > currentArrival) r = mid;
+                else break;
+                mid = l + r >> 1;
+            }
+
+            for (int i = arrLen; i > mid; i--) {
+                processArr[i] = processArr[i - 1];
+            }
+            processArr[mid] = process;
+            break;
+        case PRIORITY:
+            int currentPriority = process->priority;
+            l = 0;
+            r = arrLen;
+            mid = l + r >> 1;
+            while (l < r) {
+                int midPriority = processArr[mid]->priority;
+                if (midPriority < currentPriority) l = mid + 1;
+                else if (midPriority > currentPriority) r = mid;
+                else break;
+                mid = l + r >> 1;
+            }
+
+            for (int i = arrLen; i > mid; i--) {
+                processArr[i] = processArr[i - 1];
+            }
+            processArr[mid] = process;
+            break;
+        default:
+            break;
+    }
+}
+
+struct Process *popSortedArray(struct Process **processArr, int index, int arrLen) {
+    struct Process *result = processArr[index];
+    for (int i = index; i < arrLen - 1; i++) {
+        processArr[i] = processArr[i + 1];
+    }
+    return result;
+}
+
 int nextCPUburstTime(struct Process *p) {
     int result;
     if (p->IOburstTimeNumber == 0) {
@@ -443,13 +501,8 @@ int nextCPUburstTime(struct Process *p) {
         // Process which has done all its I/O's
         result = p->CPUburstTime - p->executedCPUburstTime;
     } else {
-        int currentIOburstNumber = p->currentIOburstNumber;
-        if (currentIOburstNumber == 0) {
-            result = p->IOburstTime[0][0];
-        } else {
-            result = p->IOburstTime[currentIOburstNumber][0]
-                     - p->IOburstTime[currentIOburstNumber - 1][0];
-        }
+        result = p->IOburstTime[p->currentIOburstNumber][0]
+                 - p->executedCPUburstTime;
     }
 
     return result;

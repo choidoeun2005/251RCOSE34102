@@ -22,11 +22,11 @@ void printFCFS() {
     drawChart(queue, i);
     printf("\n");
 
-    struct Evaluation *FCFSevaluation = evaluateAlgorithm(queue, i, processInMemory);
-    printf("Average Turnaround : %.2lf\n", FCFSevaluation->averageTurnaroundTime);
-    printf("Average Waiting : %.2lf\n", FCFSevaluation->averageWaitingTime);
+    struct Evaluation *eval = evaluateAlgorithm(queue, i, processInMemory);
+    printf("Average Turnaround : %.2lf\n", eval->averageTurnaroundTime);
+    printf("Average Waiting : %.2lf\n", eval->averageWaitingTime);
 
-    free(FCFSevaluation);
+    free(eval);
 
     printf("\n");
 }

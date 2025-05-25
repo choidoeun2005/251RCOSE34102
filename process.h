@@ -18,9 +18,8 @@ extern int processWaiting;
 
 enum MODE {
     ARRIVAL_TIME,
-    SORT_SJF,
-    PRIORITY,
-    REARRIVAL_TIME
+    NEXT_CPU_BURST_TIME,
+    PRIORITY
 };
 
 struct Process {
@@ -65,6 +64,10 @@ int nextCPUburstTime(struct Process *p);
 void insertMinHeap(struct Process **heapQueue, struct Process *process, int heapLen, int mode);
 
 struct Process *popMinHeap(struct Process **heapQueue, int heapLen, int mode);
+
+void insertSortedArray(struct Process **processArr, struct Process *process, int arrLen, int mode);
+
+struct Process *popSortedArray(struct Process **processArr, int index, int arrLen);
 
 int *getNRandomNumbers(int N, int start, int end, int sorted, int scale);
 

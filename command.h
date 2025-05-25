@@ -7,9 +7,12 @@
 
 #include "process.h"
 #include "FCFS.h"
-#include "Priority.h"
 #include "SJF.h"
+#include "PreemtiveSJF.h"
+#include "Priority.h"
+#include "PreemtivePriority.h"
 #include "util.h"
+
 
 
 #define HELP_COMMAND_PRINT_SPACE 35
@@ -64,10 +67,9 @@ void parseCommand() {
             helpList();
             helpExit();
 
-        // ================
-        //       ADD
-        // ================
-
+            // ================
+            //       ADD
+            // ================
         } else if (strcmp(parsedCmd[0], "add") == 0) {
             createProcess();
             getchar();
@@ -140,26 +142,48 @@ void parseCommand() {
                 printFCFS();
                 reset();
             } else if (strcmp(parsedCmd[1], "sjf") == 0) {
-                printSJF();
+                if (cmdLen > 2) {
+                    if (strcmp(parsedCmd[2], "-p") == 0)
+                        printPreemtiveSJF();
+                    else {
+                        printf("Invalid argument '%s' for 'run sjf'.\n", parsedCmd[2]);
+                        helpRunGeneral();
+                        goto get_next_command;
+                    }
+                } else {
+                    printSJF();
+                }
                 reset();
             } else if (strcmp(parsedCmd[1], "priority") == 0) {
-                printPriority();
+                if (cmdLen > 2) {
+                    if (strcmp(parsedCmd[2], "-p") == 0)
+                        printPreemtivePriority();
+                    else {
+                        printf("Invalid argument '%s' for 'run priority'.\n", parsedCmd[2]);
+                        helpRunGeneral();
+                        goto get_next_command;
+                    }
+                } else {
+                    printPriority();
+                }
                 reset();
             } else if (strcmp(parsedCmd[1], "-a") == 0) {
                 printFCFS();
                 reset();
                 printSJF();
                 reset();
+                printPreemtiveSJF();
+                reset();
                 printPriority();
+                reset();
+                printPreemtivePriority();
                 reset();
             } else {
                 printf("Invalid argument '%s' for 'run'\n", parsedCmd[1]);
                 helpRunGeneral();
                 helpRunRR();
             }
-        }
-
-        else {
+        } else {
             printf("Unknown command : '%s' \n", parsedCmd[0]);
             printf("type 'help' for help\n");
         }
@@ -201,9 +225,9 @@ void helpRunGeneral() {
            "-p enables preemptive mode.");
 
     printf("\t%-*s%s\n", HELP_COMMAND_PRINT_SPACE,
-       "run -a",
-       "Runs the CPU scheduler with all possible algorithms. "
-       "(FCFS, SJF, PRIORITY, RR)");
+           "run -a",
+           "Runs the CPU scheduler with all possible algorithms. "
+           "(FCFS, SJF, PRIORITY, RR)");
 }
 
 void helpList() {

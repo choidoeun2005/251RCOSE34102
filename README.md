@@ -1,11 +1,10 @@
 # CPU Scheduling Simulator
 
-## v 0.2
+## v 0.3
 
 ## Functional Updates
 
-- Implemented CLI
-- Reformed Gantt Chart interface
+- Completed preemtive algorithms
 
 ## How To Use
 
@@ -71,15 +70,17 @@
     </tr>
   </table>
 
+## Notes
+- Lower numbers indicate higher priority.
+
 ## Mandatory
 
 - <b> FCFS (Completed) </b>
 
 - <b> SJF (Completed) </b>
 - <b> Priority (Completed) </b>
-- Preemtive FCFS (TODO)
-- Preemtive SJF (TODO)
-- Preemtive Priority (TODO)
+- <b> Preemtive SJF (Completed) </b>
+- <b> Preemtive Priority (Completed) </b>
 - Round Robin (TODO)
 
 ## Optional
