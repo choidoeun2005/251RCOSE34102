@@ -363,7 +363,7 @@ void printQueue() {
     printf("[Processes in memory]\n");
 
     // {PID, AT, CBT, IO, Priority} columns in order
-    int width[] = {5, 5, 5, max(20, maxIONum * 10), 5};
+    int width[] = {5, 5, 5, max(20, maxIONum * 15), 5};
     int col = 5;
 
     printBorder(width, col);
