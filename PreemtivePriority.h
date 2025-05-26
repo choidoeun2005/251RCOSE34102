@@ -10,9 +10,11 @@
 
 void schedulePreemtivePriority(int queue[][3]);
 
+struct Evaluation *evalPreemtivePriority();
+
 void printPreemtivePriority() {
     printf("============\n");
-    printf("%s\n", "Preemtive SJF");
+    printf("%s\n", "Preemtive Priority");
     printf("============\n");
 
     int queue[10 * SIZE][3];
@@ -33,6 +35,18 @@ void printPreemtivePriority() {
     printf("\n");
 }
 
+struct Evaluation *evalPreemtivePriority() {
+
+    int queue[10 * SIZE][3];
+    schedulePreemtivePriority(queue);
+
+    int len = 0;
+    while (queue[len][0] != -2) len++;
+
+    struct Evaluation *eval = evaluateAlgorithm(queue, len, processInMemory);
+    return eval;
+}
+
 void schedulePreemtivePriority(int queue[][3]) {
     int runningProcesses = processInMemory;
     int waitingQueueLen = processInMemory;
@@ -51,9 +65,9 @@ void schedulePreemtivePriority(int queue[][3]) {
         if (!readyQueuelen) {
             int firstArrivalTime = waitingQueue[0]->arrivalTime;
 
-            while (waitingQueue[0]->arrivalTime == firstArrivalTime && waitingQueueLen) {
+            while (waitingQueueLen && waitingQueue[0]->arrivalTime == firstArrivalTime) {
                 insertMinHeap(readyQueue, waitingQueue[0], readyQueuelen++, PRIORITY);
-                popSortedArray(waitingQueue, 0, waitingQueueLen--);
+                popMinHeap(waitingQueue, waitingQueueLen--, ARRIVAL_TIME);
             }
 
             if (firstArrivalTime != 0) {
@@ -78,43 +92,43 @@ void schedulePreemtivePriority(int queue[][3]) {
         PID = top->PID;
         topArrivalTime = top->arrivalTime;
 
-
-        int expectedEnd = end + nextCPUburstTime(top);
+        int expectedEnd = end + nextCPUBurstTime(top);
         while (waitingQueueLen) {
             int candidateArrival = waitingQueue[0]->arrivalTime;
             if (candidateArrival > expectedEnd) break;
 
             if (waitingQueue[0]->priority < top->priority) {
-                // Preempt
+                // If waitingQueue[0] can preempt current process -> preempt
                 memcpy(preemptingProcess, waitingQueue[0], sizeof(struct Process));
                 preempted = 1;
-                top->executedCPUburstTime += candidateArrival - end;
+                top->executedCPUBurstTime += candidateArrival - end;
                 top->arrivalTime = candidateArrival;
                 end = candidateArrival;
                 insertMinHeap(readyQueue, top, readyQueuelen++, PRIORITY);
-                popSortedArray(waitingQueue, 0, waitingQueueLen--);
+                popMinHeap(waitingQueue, waitingQueueLen--, ARRIVAL_TIME);
                 break;
             }
+            // waitingQueue[0] cannot preempt current process -> insert to ready queue
             insertMinHeap(readyQueue, waitingQueue[0], readyQueuelen++, PRIORITY);
-            popSortedArray(waitingQueue, 0, waitingQueueLen--);
+            popMinHeap(waitingQueue, waitingQueueLen--, ARRIVAL_TIME);
         }
 
         if (preempted) goto parse_next_task;
 
-        if (top->IOburstTimeNumber) {
-            if (top->currentIOburstNumber >= top->IOburstTimeNumber) {
-                end += top->CPUburstTime - top->executedCPUburstTime;
+        if (top->IOBurstTimeNumber) {
+            if (top->currentIOBurstNumber >= top->IOBurstTimeNumber) {
+                end += top->CPUBurstTime - top->executedCPUBurstTime;
                 runningProcesses--;
             } else {
-                end += nextCPUburstTime(top);
-                int *currentIOburstInfo = top->IOburstTime[top->currentIOburstNumber++];
-                top->arrivalTime = end + currentIOburstInfo[1];
-                top->executedCPUburstTime = currentIOburstInfo[0];
-                insertSortedArray(waitingQueue, top, waitingQueueLen++, ARRIVAL_TIME);
+                end += nextCPUBurstTime(top);
+                int *currentIOBurstInfo = top->IOBurstTime[top->currentIOBurstNumber++];
+                top->arrivalTime = end + currentIOBurstInfo[1];
+                top->executedCPUBurstTime = currentIOBurstInfo[0];
+                insertMinHeap(waitingQueue, top, waitingQueueLen++, ARRIVAL_TIME);
             }
         } else {
             // If the process does not request I/O
-            end += top->CPUburstTime;
+            end += top->CPUBurstTime;
             runningProcesses--;
         }
 

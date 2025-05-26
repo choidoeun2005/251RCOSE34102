@@ -19,18 +19,19 @@ extern int processWaiting;
 enum MODE {
     ARRIVAL_TIME,
     NEXT_CPU_BURST_TIME,
-    PRIORITY
+    PRIORITY,
+    INSERT_TO_LAST,
+    INSERT_TO_FIRST
 };
 
 struct Process {
     int PID;
     int arrivalTime;
-    int CPUburstTime;
-    int executedCPUburstTime;
-    int IOburstTime[SIZE][2];
-    int IOburstTimeNumber;
-    int currentIOburstNumber;
-    int rearrivalTime;
+    int CPUBurstTime;
+    int executedCPUBurstTime;
+    int IOBurstTime[6][2];
+    int IOBurstTimeNumber;
+    int currentIOBurstNumber;
     int priority;
 };
 
@@ -57,17 +58,19 @@ void sortProcesses(int mode);
 
 void printQueue();
 
+void printBorder(int width[], int col);
+
 void drawChart(int info[][3], int taskNumber);
 
-int nextCPUburstTime(struct Process *p);
+int nextCPUBurstTime(struct Process *p);
 
 void insertMinHeap(struct Process **heapQueue, struct Process *process, int heapLen, int mode);
 
 struct Process *popMinHeap(struct Process **heapQueue, int heapLen, int mode);
 
-void insertSortedArray(struct Process **processArr, struct Process *process, int arrLen, int mode);
+void insertArrayAndSort(struct Process **processArr, struct Process *process, int arrLen, int mode);
 
-struct Process *popSortedArray(struct Process **processArr, int index, int arrLen);
+struct Process *popArray(struct Process **processArr, int index, int arrLen);
 
 int *getNRandomNumbers(int N, int start, int end, int sorted, int scale);
 

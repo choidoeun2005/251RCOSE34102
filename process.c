@@ -5,6 +5,9 @@
 
 #include "process.h"
 
+#define max(x, y) ((x > y) ? x : y)
+#define min(x, y) ((x < y) ? x : y)
+
 struct Process *processes[SIZE];
 struct Process *readyQueue[SIZE];
 struct Process *waitingQueue[SIZE];
@@ -38,6 +41,8 @@ void reset() {
     }
 }
 
+// Creates process(es) by keyboard input or random numbers
+// User can type '-1' any time to suspend current process creation.
 void createProcess() {
     int processNumber;
     printf("Number of processes:");
@@ -48,14 +53,14 @@ void createProcess() {
     scanf("%d", &random);
 
     int scale = random ? 5 : 1;
-    // Every figure is a multiple of {scale} (for readability)
+    // Every figure is a multiple of {scale} in case of random (for readability)
 
     int currentProcessInMemory = processInMemory;
 
     for (int i = currentProcessInMemory; i < processNumber + currentProcessInMemory; i++) {
         printf("-- %dth Process Config --\n", i + 1);
 
-        printf("PID :");
+        printf("PID (0 ~ 99) :");
         if (random) {
             int index = rand() % (SIZE - processInMemory);
             PID = availablePIDs[index];
@@ -71,8 +76,15 @@ void createProcess() {
             while (1) {
                 scanf(" %d", &PID);
                 if (PID == -1) goto suspend;
+                if (PID < 0 || PID >= SIZE) {
+                    printf("PID should be in the range 0 to %d inclusive\n", SIZE - 1);
+                    printf("PID :");
+                    continue;
+                }
+
                 if (!PIDOccupation[PID])
                     break;
+                // handle the case of duplicated PID
                 printf("Duplicated PID: %d, try again\n", PID);
                 printf("Occupied PIDs: ");
                 for (int p = 0; p < SIZE; p++) {
@@ -99,73 +111,130 @@ void createProcess() {
         arrivalTimes[PID] = ArrivalTime;
 
 
-        int CPUburstTime;
-        printf("CPU burst Time:");
+        int CPUBurstTime;
+        printf("CPU Burst Time:");
         if (random) {
-            CPUburstTime = (rand() % 49) * scale + scale; // not to be 0
-            printf(" %d\n", CPUburstTime);
+            CPUBurstTime = (rand() % 49) * scale + scale; // not to be 0
+            printf(" %d\n", CPUBurstTime);
         } else {
             while (1) {
-                scanf("%d", &CPUburstTime);
+                scanf("%d", &CPUBurstTime);
 
-                if (ArrivalTime == -1) goto suspend;
+                if (CPUBurstTime == -1) goto suspend;
 
-                if (CPUburstTime > 0) break;
-                printf("Invalid CPU Burst Time: %d, try again\nCPU burst Time:", CPUburstTime);
+                if (CPUBurstTime > 0) break;
+                printf("Invalid CPU Burst Time: %d, try again\nCPU burst Time:", CPUBurstTime);
             }
         }
 
-        int IOburstTimeNumber;
+        int IOBurstTimeNumber;
         printf("Number of IO burst Time:");
 
-        int maxIOburstTimeNumber = CPUburstTime / scale - 1;
-        if (maxIOburstTimeNumber > 5)
-            maxIOburstTimeNumber = 5;
+        int maxIOBurstTimeNumber = CPUBurstTime / scale - 1;
+        if (maxIOBurstTimeNumber > 5)
+            maxIOBurstTimeNumber = 5;
 
         if (random) {
-            if (maxIOburstTimeNumber)
-                IOburstTimeNumber = rand() % maxIOburstTimeNumber;
+            if (maxIOBurstTimeNumber)
+                IOBurstTimeNumber = rand() % maxIOBurstTimeNumber;
             else
-                IOburstTimeNumber = 0;
-            printf(" %d\n", IOburstTimeNumber);
-        } else
-            scanf("%d", &IOburstTimeNumber);
+                IOBurstTimeNumber = 0;
+            printf(" %d\n", IOBurstTimeNumber);
+        } else {
+            while (1) {
+                scanf("%d", &IOBurstTimeNumber);
+                if (IOBurstTimeNumber <= maxIOBurstTimeNumber) break;
+                printf("Invalid IO burst time number: %d\n", IOBurstTimeNumber);
+                printf("Maximum available IO burst time number is: %d\n", maxIOBurstTimeNumber);
+                printf("Number of IO burst Time:");
+            }
+        }
 
-        if (IOburstTimeNumber == -1) goto suspend;
+        if (IOBurstTimeNumber == -1) goto suspend;
 
-        int IOburstTime[SIZE][2];
-        IOburstTime[IOburstTimeNumber][0] = -1; // -1 Indicates the end of the list
-        if (IOburstTimeNumber != 0) {
-            printf("IO Burst Point & IO Burst Time:\n");
-            int *randomRequests = getNRandomNumbers(IOburstTimeNumber, scale, CPUburstTime - scale,
+        int IOBurstTime[6][2];
+        IOBurstTime[IOBurstTimeNumber][0] = -1; // -1 Indicates the end of the list
+        if (IOBurstTimeNumber != 0) {
+            printf("IO Request Time & IO Burst Time:\n");
+            int *randomRequests = getNRandomNumbers(IOBurstTimeNumber, scale, CPUBurstTime - scale,
                                                     1, scale);
-            int *randomTimes = getNRandomNumbers(IOburstTimeNumber, scale, 30 * scale, 0, scale);
-            for (int j = 0; j < IOburstTimeNumber; j++) {
+            int *randomTimes = getNRandomNumbers(IOBurstTimeNumber, scale, 30 * scale, 0, scale);
+
+            int IORequestPoints[5];
+            int len = 0;
+
+            for (int j = 0; j < IOBurstTimeNumber; j++) {
                 if (random) {
-                    IOburstTime[j][0] = randomRequests[j];
-                    IOburstTime[j][1] = randomTimes[j];
+                    IOBurstTime[j][0] = randomRequests[j];
+                    IOBurstTime[j][1] = randomTimes[j];
                     printf("| %dth IO :", j + 1);
                     printf(" %d %d\n",
-                           IOburstTime[j][0],
-                           IOburstTime[j][1]);
+                           IOBurstTime[j][0],
+                           IOBurstTime[j][1]);
                 } else {
+                    // User input
                     while (1) {
+                        int duplicateFlag = 0;
                         printf("| %dth IO :", j + 1);
-                        scanf("%d %d",
-                              &IOburstTime[j][0],
-                              &IOburstTime[j][1]);
+                        scanf("%d", &IOBurstTime[j][0]);
+                        if (IOBurstTime[j][0] == -1) goto suspend;
+                        scanf("%d", &IOBurstTime[j][1]);
+                        if (IOBurstTime[j][1] == -1) goto suspend;
 
-                        if (IOburstTime[j][0] == -1 || IOburstTime[j][1] == -1) goto suspend;
+                        // IO Requesting time not to be duplicated
+                        for (int k = 0; k < len; k++) {
+                            if (IORequestPoints[k] == IOBurstTime[j][0]) {
+                                printf("Duplicated IO Request Time : %d. try again\n",
+                                       IOBurstTime[j][0]);
+                                duplicateFlag = 1;
+                                break;
+                            }
+                        }
 
-                        // not to be 0 values
-                        if (IOburstTime[j][0] * IOburstTime[j][1]) break;
-                        printf("Invalid IO Request Time or IO Burst time\ntry again:");
+                        if (duplicateFlag) continue;
+
+                        if (IOBurstTime[j][0] >= CPUBurstTime) {
+                            printf(
+                                "IO request time must be smaller than CPU burst time. try again\n");
+                            continue;
+                        }
+
+                        // not to be 0 or negative values
+                        if (IOBurstTime[j][0] > 0 && IOBurstTime[j][1] > 0) {
+                            IORequestPoints[len++] = IOBurstTime[j][0];
+                            break;
+                        }
+                        printf("Values must be positive. try again\n");
                     }
                 }
             }
+
+            if (!random) {
+                // insertion sort of IOburstTime array
+                for (int k = 1; k < IOBurstTimeNumber; k++) {
+                    int temp0 = IOBurstTime[k][0];
+                    int temp1 = IOBurstTime[k][1];
+                    int insertPos = k - 1;
+
+                    while (insertPos >= 0 && IOBurstTime[insertPos][0] > temp0) {
+                        insertPos--;
+                    }
+
+                    for (int l = k; l > insertPos + 1; l--) {
+                        IOBurstTime[l][0] = IOBurstTime[l - 1][0];
+                        IOBurstTime[l][1] = IOBurstTime[l - 1][1];
+                    }
+
+                    IOBurstTime[insertPos + 1][0] = temp0;
+                    IOBurstTime[insertPos + 1][1] = temp1;
+                }
+            }
+
+
             free(randomRequests);
             free(randomTimes);
         }
+
 
         printf("Priority:");
         int priority;
@@ -180,14 +249,13 @@ void createProcess() {
         struct Process *currentProcess = malloc(sizeof(struct Process));
         currentProcess->PID = PID;
         currentProcess->arrivalTime = ArrivalTime;
-        currentProcess->CPUburstTime = CPUburstTime;
-        currentProcess->executedCPUburstTime = 0;
+        currentProcess->CPUBurstTime = CPUBurstTime;
+        currentProcess->executedCPUBurstTime = 0;
         currentProcess->priority = priority;
 
-        memcpy(currentProcess->IOburstTime, IOburstTime, sizeof(IOburstTime));
-        currentProcess->IOburstTimeNumber = IOburstTimeNumber;
-        currentProcess->currentIOburstNumber = 0;
-        currentProcess->rearrivalTime = -1;
+        memcpy(currentProcess->IOBurstTime, IOBurstTime, sizeof(IOBurstTime));
+        currentProcess->IOBurstTimeNumber = IOBurstTimeNumber;
+        currentProcess->currentIOBurstNumber = 0;
 
         processes[i] = currentProcess;
         processInMemory++;
@@ -287,26 +355,67 @@ void printQueue() {
         return;
     }
 
-    for (int i = 0; i < SIZE; i++) {
-        if (processes[i] == NULL) break;
-        struct Process currentProcess = *processes[i];
-        printf("------------------------\n");
-        printf("Process ID: %d\n", currentProcess.PID);
-        printf("Arrival Time: %d\n", currentProcess.arrivalTime);
-        printf("CPU Burst Time: %d\n", currentProcess.CPUburstTime);
-        if (currentProcess.IOburstTime[0][0] != -1) {
-            printf("IO Burst Point & IO Burst Time\n");
-            for (int j = 0; j < SIZE; j++) {
-                if (currentProcess.IOburstTime[j][0] < 0) break;
-                printf("| %dth IO: %d %d\n", j + 1,
-                       currentProcess.IOburstTime[j][0], currentProcess.IOburstTime[j][1]);
-            }
-        }
-        printf("Priority: %d\n", currentProcess.priority);
+    int maxIONum = 0;
+    for (int i = 0; i < processInMemory; i++) {
+        maxIONum = max(maxIONum, processes[i]->IOBurstTimeNumber);
     }
+
+    printf("[Processes in memory]\n");
+
+    // {PID, AT, CBT, IO, Priority} columns in order
+    int width[] = {5, 5, 5, max(20, maxIONum * 10), 5};
+    int col = 5;
+
+    printBorder(width, col);
+    printf("| %-*s | %-*s | %-*s | %-*s | %-*s |\n",
+           width[0] - 2, "PID",
+           width[1] - 2, "AT",
+           width[2] - 2, "CBT",
+           width[3] - 2, "I/O Burst Times",
+           width[4] - 2, "Pri");
+    printBorder(width, col);
+
+    for (int i = 0; i < processInMemory; i++) {
+        char IOBurstTimeStr[width[3] + 1];
+        IOBurstTimeStr[0] = '\0';
+
+        for (int j = 0; j < processes[i]->IOBurstTimeNumber; j++) {
+            char buf[12];
+            snprintf(buf, sizeof(buf), "(%d,%d)",
+                     processes[i]->IOBurstTime[j][0],
+                     processes[i]->IOBurstTime[j][1]);
+
+            if (j != 0) {
+                strncat(IOBurstTimeStr, ", ", width[3] - strlen(IOBurstTimeStr) - 1);
+            }
+            strncat(IOBurstTimeStr, buf, width[3] - strlen(IOBurstTimeStr) - 1);
+        }
+
+        printf("| %-*d | %-*d | %-*d | %-*s | %-*d |\n",
+               width[0] - 2, processes[i]->PID,
+               width[1] - 2, processes[i]->arrivalTime,
+               width[2] - 2, processes[i]->CPUBurstTime,
+               width[3] - 2, IOBurstTimeStr,
+               width[4] - 2, processes[i]->priority);
+    }
+
+    printBorder(width, col);
 }
 
+void printBorder(int width[], int col) {
+    printf("+");
+    for (int i = 0; i < col; i++) {
+        for (int j = 0; j < width[i]; j++) {
+            printf("-");
+        }
+        printf("+");
+    }
+    printf("\n");
+}
+
+
 void drawChart(int info[][3], int taskNumber) {
+    printf("[Gantt Chart]\n\n");
     int line = 0;
     int stop = 0;
     int repeatPrevLine = 0;
@@ -363,7 +472,7 @@ void insertMinHeap(struct Process **heapQueue, struct Process *process, int heap
                 swap = childProcess->arrivalTime < parentProcess->arrivalTime;
                 break;
             case NEXT_CPU_BURST_TIME:
-                swap = nextCPUburstTime(childProcess) < nextCPUburstTime(parentProcess);
+                swap = nextCPUBurstTime(childProcess) < nextCPUBurstTime(parentProcess);
                 break;
             case PRIORITY:
                 swap = heapQueue[heapLen]->priority < heapQueue[parent]->priority;
@@ -412,10 +521,10 @@ struct Process *popMinHeap(struct Process **heapQueue, int heapLen, int mode) {
                 if (r < heapLen && heapQueue[r] == NULL) minChild = l;
                 else
                     minChild = ((r < heapLen) &&
-                                nextCPUburstTime(heapQueue[l]) > nextCPUburstTime(heapQueue[r]))
+                                nextCPUBurstTime(heapQueue[l]) > nextCPUBurstTime(heapQueue[r]))
                                    ? r
                                    : l;
-                swap = nextCPUburstTime(heapQueue[parent]) > nextCPUburstTime(heapQueue[minChild]);
+                swap = nextCPUBurstTime(heapQueue[parent]) > nextCPUBurstTime(heapQueue[minChild]);
                 break;
             case PRIORITY:
                 if (r < heapLen && heapQueue[r] == NULL) minChild = l;
@@ -440,7 +549,8 @@ struct Process *popMinHeap(struct Process **heapQueue, int heapLen, int mode) {
     return root;
 }
 
-void insertSortedArray(struct Process **processArr, struct Process *process, int arrLen, int mode) {
+void insertArrayAndSort(struct Process **processArr, struct Process *process, int arrLen,
+                        int mode) {
     switch (mode) {
         case ARRIVAL_TIME:
             int currentArrival = process->arrivalTime;
@@ -479,12 +589,21 @@ void insertSortedArray(struct Process **processArr, struct Process *process, int
             }
             processArr[mid] = process;
             break;
+        case INSERT_TO_LAST:
+            processArr[arrLen] = process;
+            break;
+        case INSERT_TO_FIRST:
+            for (int i = arrLen; i > 0; i--) {
+                processArr[i] = processArr[i - 1];
+            }
+            processArr[0] = process;
+            break;
         default:
             break;
     }
 }
 
-struct Process *popSortedArray(struct Process **processArr, int index, int arrLen) {
+struct Process *popArray(struct Process **processArr, int index, int arrLen) {
     struct Process *result = processArr[index];
     for (int i = index; i < arrLen - 1; i++) {
         processArr[i] = processArr[i + 1];
@@ -492,17 +611,14 @@ struct Process *popSortedArray(struct Process **processArr, int index, int arrLe
     return result;
 }
 
-int nextCPUburstTime(struct Process *p) {
+int nextCPUBurstTime(struct Process *p) {
     int result;
-    if (p->IOburstTimeNumber == 0) {
-        // Process with no I/O
-        result = p->CPUburstTime;
-    } else if (p->IOburstTimeNumber == p->currentIOburstNumber) {
+    if (p->IOBurstTimeNumber == p->currentIOBurstNumber) {
         // Process which has done all its I/O's
-        result = p->CPUburstTime - p->executedCPUburstTime;
+        result = p->CPUBurstTime - p->executedCPUBurstTime;
     } else {
-        result = p->IOburstTime[p->currentIOburstNumber][0]
-                 - p->executedCPUburstTime;
+        result = p->IOBurstTime[p->currentIOBurstNumber][0]
+                 - p->executedCPUBurstTime;
     }
 
     return result;

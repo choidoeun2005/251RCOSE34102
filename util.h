@@ -7,13 +7,53 @@
 #define max(x, y) ((x > y) ? x : y)
 #define min(x, y) ((x < y) ? x : y)
 
+
+void printCompareAlgorithms(char *algoName[], struct Evaluation *eval[], int len) {
+
+    int width[] = {25, 15, 15};
+
+    printf("[Algorithm Compare View]\n");
+
+    for (int i = 0; i < 3; i++) {
+        printf("+");
+        for (int j = 0; j < width[i]; j++) printf("-");
+    }
+    printf("+\n");
+
+    printf("| %-*s", width[0] - 1, "Algorithm");
+    printf("| %-*s", width[1] - 1, "Turnaround");
+    printf("| %-*s|\n", width[2] - 1, "Waiting");
+
+    for (int i = 0; i < 3; i++) {
+        printf("+");
+        for (int j = 0; j < width[i]; j++) printf("-");
+    }
+    printf("+\n");
+
+    for (int i = 0; i < len; i++) {
+        printf("| %-*s", width[0] - 1, algoName[i]);
+        printf("| %*.2f ", width[1] - 2, eval[i]->averageTurnaroundTime);
+        printf("| %*.2f |\n", width[2] - 2, eval[i]->averageWaitingTime);
+    }
+
+    for (int i = 0; i < 3; i++) {
+        printf("+");
+        for (int j = 0; j < width[i]; j++) printf("-");
+    }
+    printf("+\n");
+}
+
 int *getNRandomNumbers(int N, int start, int end, int sorted, int scale) {
     // returns N distinct random numbers in [start, end]
-    // unit is 5
+    // unit is <scale>
     int len = (end - start) / scale + 1;
     int *arr = malloc(len * sizeof(int));
     for (int i = 0; i < len; i++) {
         arr[i] = start + i * scale;
+    }
+
+    if (len == 1) {
+        return arr;
     }
 
     int iter = rand() % 6 + 1;
@@ -90,12 +130,16 @@ int strToInt(char *str) {
 }
 
 char *toLowerCase(char *str) {
-    for (char *p = str; *p; p++) {
-        if ('A' <= *p && *p <= 'Z')
-            *p -= 'A' - 'a';
-    }
+    char *result = malloc(strlen(str) + 1);
+    if (!result) return NULL;
 
-    return str;
+    for (int i = 0; str[i]; i++) {
+        result[i] = ('A' <= str[i] && str[i] <= 'Z') ? str[i] - 'A' + 'a' : str[i];
+    }
+    result[strlen(str)] = '\0';
+
+    return result;
 }
+
 #endif //UTIL_H
 

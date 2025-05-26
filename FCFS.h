@@ -6,6 +6,8 @@
 
 #include "process.h"
 
+struct Evaluation *evalFCFS();
+
 void scheduleFCFS(int queue[][3]);
 
 void printFCFS() {
@@ -15,14 +17,14 @@ void printFCFS() {
 
     int queue[10 * SIZE][3];
     scheduleFCFS(queue);
-    int i = 0;
-    while (queue[i][0] != -2) i++;
+    int len = 0;
+    while (queue[len][0] != -2) len++;
 
     printf("\n");
-    drawChart(queue, i);
+    drawChart(queue, len);
     printf("\n");
 
-    struct Evaluation *eval = evaluateAlgorithm(queue, i, processInMemory);
+    struct Evaluation *eval = evaluateAlgorithm(queue, len, processInMemory);
     printf("Average Turnaround : %.2lf\n", eval->averageTurnaroundTime);
     printf("Average Waiting : %.2lf\n", eval->averageWaitingTime);
 
@@ -31,48 +33,65 @@ void printFCFS() {
     printf("\n");
 }
 
-void scheduleFCFS(int queue[][3]) {
-    memcpy(readyQueue, processes, sizeof(processes));
+struct Evaluation *evalFCFS() {
+    int queue[10 * SIZE][3];
+    scheduleFCFS(queue);
 
+    int len = 0;
+    while (queue[len][0] != -2) len++;
+
+    struct Evaluation *eval = evaluateAlgorithm(queue, len, processInMemory);
+    return eval;
+}
+
+void scheduleFCFS(int queue[][3]) {
     int runningProcesses = processInMemory;
+    int readyQueueLen = processInMemory;
     int PID;
     int end = 0;
+    int topArrivalTime = 0;
     int i = 0;
-    while (runningProcesses) {
-        struct Process *peek = malloc(sizeof(struct Process));
-        memcpy(peek, readyQueue[0], sizeof(struct Process));
 
-        PID = peek->arrivalTime > end ? -1 : peek->PID;
-        queue[i][2] = peek->arrivalTime;
+    memcpy(readyQueue, processes, sizeof(processes));
+
+    while (runningProcesses) {
+        struct Process *top = malloc(sizeof(struct Process));
+        memcpy(top, readyQueue[0], sizeof(struct Process));
+
+
+        PID = top->arrivalTime > end ? -1 : top->PID;
+        topArrivalTime = top->arrivalTime;
 
         if (PID == -1) {
             // Idle process
-            end = peek->arrivalTime;
-        } else if (peek->IOburstTimeNumber) {
-            // If the process requests I/O
-            popMinHeap(readyQueue, runningProcesses--, ARRIVAL_TIME);
-            if (peek->currentIOburstNumber >= peek->IOburstTimeNumber) {
-                end += peek->CPUburstTime - peek->executedCPUburstTime;
-            } else {
-                int *currentIOburstInfo = peek->IOburstTime[peek->currentIOburstNumber++];
-                end += currentIOburstInfo[0] - peek->executedCPUburstTime;
-                peek->arrivalTime = end + currentIOburstInfo[1];
-                peek->executedCPUburstTime = currentIOburstInfo[0];
-                insertMinHeap(readyQueue, peek, runningProcesses++, ARRIVAL_TIME);
-            }
-        } else {
-            // If the process does not request I/O
-            popMinHeap(readyQueue, runningProcesses--, ARRIVAL_TIME);
-            end += peek->CPUburstTime;
+            end = top->arrivalTime;
+            goto parse_next_task;
         }
+
+        popMinHeap(readyQueue, readyQueueLen--, ARRIVAL_TIME);
+
+        end += nextCPUBurstTime(top);
+
+        if (top->currentIOBurstNumber >= top->IOBurstTimeNumber) {
+            // Process has finished all its I/O
+            runningProcesses--;
+        } else {
+            // Process has some I/O remaining
+            int *currentIOBurstInfo = top->IOBurstTime[top->currentIOBurstNumber++];
+            top->arrivalTime = end + currentIOBurstInfo[1];
+            top->executedCPUBurstTime = currentIOBurstInfo[0];
+            insertMinHeap(readyQueue, top, readyQueueLen++, ARRIVAL_TIME);
+        }
+
+    parse_next_task:
         queue[i][0] = PID;
         queue[i][1] = end;
+        queue[i][2] = topArrivalTime;
 
         i++;
     }
     queue[i][0] = -2;
 }
-
 
 
 #endif //FCFS_H
