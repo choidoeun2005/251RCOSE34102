@@ -28,6 +28,7 @@ void printPreemtiveSJF() {
     struct Evaluation *eval = evaluateAlgorithm(queue, i, processInMemory);
     printf("Average Turnaround : %.2lf\n", eval->averageTurnaroundTime);
     printf("Average Waiting : %.2lf\n", eval->averageWaitingTime);
+    printf("Maximum Waiting : %.2lf\n", eval->maxWaitingTime);
 
     free(eval);
 
@@ -113,21 +114,16 @@ void schedulePreemtiveSJF(int queue[][3]) {
 
         if (preempted) goto parse_next_task;
 
-        if (top->IOBurstTimeNumber) {
-            if (top->currentIOBurstNumber >= top->IOBurstTimeNumber) {
-                end += top->CPUBurstTime - top->executedCPUBurstTime;
-                runningProcesses--;
-            } else {
-                end += nextCPUBurstTime(top);
-                int *currentIOBurstInfo = top->IOBurstTime[top->currentIOBurstNumber++];
-                top->arrivalTime = end + currentIOBurstInfo[1];
-                top->executedCPUBurstTime = currentIOBurstInfo[0];
-                insertMinHeap(waitingQueue, top, waitingQueueLen++, ARRIVAL_TIME);
-            }
-        } else {
-            // If the process does not request I/O
-            end += top->CPUBurstTime;
+        if (top->currentIOBurstNumber >= top->IOBurstTimeNumber) {
+            // Completed I/O
+            end += top->CPUBurstTime - top->executedCPUBurstTime;
             runningProcesses--;
+        } else {
+            end += nextCPUBurstTime(top);
+            int *currentIOBurstInfo = top->IOBurstTime[top->currentIOBurstNumber++];
+            top->arrivalTime = end + currentIOBurstInfo[1];
+            top->executedCPUBurstTime = currentIOBurstInfo[0];
+            insertMinHeap(waitingQueue, top, waitingQueueLen++, ARRIVAL_TIME);
         }
 
     parse_next_task:

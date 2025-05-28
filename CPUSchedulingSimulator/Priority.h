@@ -29,6 +29,7 @@ void printPriority() {
     struct Evaluation *eval = evaluateAlgorithm(queue, i, processInMemory);
     printf("Average Turnaround : %.2lf\n", eval->averageTurnaroundTime);
     printf("Average Waiting : %.2lf\n", eval->averageWaitingTime);
+    printf("Maximum Waiting : %.2lf\n", eval->maxWaitingTime);
 
     free(eval);
 

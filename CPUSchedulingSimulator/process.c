@@ -328,8 +328,10 @@ struct Evaluation *evaluateAlgorithm(int info[][3], int len, int taskNumbers) {
         if (info[i - 1][0] == -1 || info[i][0] == -1) continue;
 
         int diff = previousTaskEnd - currentTaskArrival;
-        result->waitingTime[info[i][0]] += diff > 0 ? diff : 0;
-        result->averageWaitingTime += diff > 0 ? diff : 0;
+        int currentWaitingTime = diff > 0 ? diff : 0;
+        result->waitingTime[info[i][0]] += currentWaitingTime;
+        result->averageWaitingTime += currentWaitingTime;
+        result->maxWaitingTime = max(result->maxWaitingTime, currentWaitingTime);
     }
 
     result->averageWaitingTime /= taskNumbers;

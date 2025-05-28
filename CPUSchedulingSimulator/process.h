@@ -40,6 +40,7 @@ struct Evaluation {
     int waitingTime[SIZE];
     double averageTurnaroundTime;
     double averageWaitingTime;
+    double maxWaitingTime;
 };
 
 void config();

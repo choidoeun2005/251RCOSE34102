@@ -10,11 +10,11 @@
 
 void printCompareAlgorithms(char *algoName[], struct Evaluation *eval[], int len) {
 
-    int width[] = {25, 15, 15};
+    int width[] = {25, 15, 15, 15};
 
     printf("[Algorithm Compare View]\n");
 
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < 4; i++) {
         printf("+");
         for (int j = 0; j < width[i]; j++) printf("-");
     }
@@ -22,9 +22,10 @@ void printCompareAlgorithms(char *algoName[], struct Evaluation *eval[], int len
 
     printf("| %-*s", width[0] - 1, "Algorithm");
     printf("| %-*s", width[1] - 1, "Turnaround");
-    printf("| %-*s|\n", width[2] - 1, "Waiting");
+    printf("| %-*s", width[2] - 1, "Waiting");
+    printf("| %-*s|\n", width[3] - 1, "Max. Waiting");
 
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < 4; i++) {
         printf("+");
         for (int j = 0; j < width[i]; j++) printf("-");
     }
@@ -33,10 +34,11 @@ void printCompareAlgorithms(char *algoName[], struct Evaluation *eval[], int len
     for (int i = 0; i < len; i++) {
         printf("| %-*s", width[0] - 1, algoName[i]);
         printf("| %*.2f ", width[1] - 2, eval[i]->averageTurnaroundTime);
-        printf("| %*.2f |\n", width[2] - 2, eval[i]->averageWaitingTime);
+        printf("| %*.2f ", width[2] - 2, eval[i]->averageWaitingTime);
+        printf("| %*.2f |\n", width[3] - 2, eval[i]->maxWaitingTime);
     }
 
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < 4; i++) {
         printf("+");
         for (int j = 0; j < width[i]; j++) printf("-");
     }
