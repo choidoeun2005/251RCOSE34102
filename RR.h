@@ -45,10 +45,6 @@ struct Evaluation *evalRR(int timeQuantum) {
     int queue[10 * SIZE][3];
     int result = scheduleRR(queue, timeQuantum);
 
-    int len = 0;
-    while (queue[len][0] != -2) len++;
-
-
     struct Evaluation *eval;
     if (result < 0) { // Exception handle
         printf("Too much processes or too small time quantum to simulate RR!\n");
@@ -58,6 +54,9 @@ struct Evaluation *evalRR(int timeQuantum) {
         eval->averageTurnaroundTime = -1;
         return eval;
     }
+
+    int len = 0;
+    while (queue[len][0] != -2) len++;
 
     eval = evaluateAlgorithm(queue, len, processInMemory);
     return eval;
