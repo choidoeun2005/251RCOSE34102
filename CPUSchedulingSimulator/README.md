@@ -2,6 +2,9 @@
 
 ## v 1.0
 
+## Demo Video Link
+- https://youtu.be/yYbmWmn6nvc
+
 ## Functional Updates
 
 - Completed RR algorithm
